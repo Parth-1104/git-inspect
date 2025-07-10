@@ -34,6 +34,18 @@ const items=[
 
 ]
 
+const projects=[
+    {
+        name:"project 1"
+    },
+    {
+        name:"project 2"
+    },
+    {
+        name:"project 3"
+    },
+]
+
 
 
 
@@ -71,6 +83,27 @@ export function AppSidebar(){
                         })}
                         </SidebarMenu>
                     </SidebarGroupContent>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupLabel>
+                        <SidebarGroupContent>
+                            <SidebarMenu>
+                               { projects.map(project=>{
+                                return(
+                                    <SidebarMenuItem key={project.name}>
+                                        <SidebarMenuButton asChild>
+                                            <div>
+                                                <div>
+                                                    
+                                                </div>
+                                            </div>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )
+                               })}
+                            </SidebarMenu>
+                        </SidebarGroupContent>
+                    </SidebarGroupLabel>
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
