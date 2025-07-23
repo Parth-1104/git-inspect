@@ -1,13 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User{
@@ -23,4 +20,33 @@ model User{
     emailAddress String @unique
 
     credits Int @default(150)
+    UserToProjects UserToProject[]
+}
+
+
+model Project{
+  id           String        @id @default(cuid())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+
+  name         String
+  githubUrl    String
+  deletedAt    DateTime?
+
+  UserToProjects  UserToProject[]
+}
+
+model UserToProject{
+     id        String        @id @default(cuid())
+    createdAt DateTime      @default(now())
+    updatedAt DateTime      @updatedAt
+
+    userId     String
+    projectId  String
+
+    user User @relation(fields: [userId],references:[id])
+    project Project @relation(fields: [projectId],references:[id])
+    @@unique([userId,projectId]) 
+
 }
