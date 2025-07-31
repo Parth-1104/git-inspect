@@ -9,7 +9,8 @@ const useProject = () => {
   return{
         projects,
         project,
-        projectId
+        projectId,
+        setProjectId
   }
 }
 
