@@ -5,11 +5,13 @@ import { ExternalLink, Github } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
+
 const page = () => {
 
     const {project}=useProject()
   return (
     <div>
+      {project?.id ?? 'No project selected'}
 
       <div className='flex item-center justify-between flex-wrap gap-y-4'>
         {/* githublink */}
