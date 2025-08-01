@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
+  model: 'gemini-2.0-flash',
 });
 
 export const AisummariseCommit = async (diff: string) => {
@@ -47,23 +47,4 @@ ${diff}
   return response.response.text(); // NOTE: Gemini uses `response.response.text()` for output
 };
 
-// Example usage:
-const run = async () => {
-  const diff = `diff --git a/src/components/ui/MultistepLoader.tsx b/src/components/ui/MultistepLoader.tsx
-new file mode 100644
-index 0000000..abc1234
---- /dev/null
-+++ b/src/components/ui/MultistepLoader.tsx
-@@ -0,0 +1,146 @@
-+ "use client";
-+import { cn } from "../../utils/lib";
-+import { AnimatePresence, motion } from "motion/react";
-// ... (rest of your large patch text)
-+export const MultiStepLoader = ({ ... }) => { ... };
-`;
 
-  const summary = await AisummariseCommit(diff);
-  console.log(summary);
-};
-
-run().catch(console.error);

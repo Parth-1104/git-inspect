@@ -29,6 +29,7 @@ export const getCommitHashes=async(githubUrl:string):Promise<Response[]>=>{
         owner,
         repo
     })
+    console.log(data)
 
     const sortedCommits=data.sort((a:any,b:any)=> new Date(b.commit.author.date).getTime()-new Date(a.commit.author.date).getTime()) as any[]
 
@@ -36,7 +37,7 @@ export const getCommitHashes=async(githubUrl:string):Promise<Response[]>=>{
         commitHash: commit.sha as string,
         commitMessage: commit.commit?.message ??' ',
         commitAuthorName: commit.commit?.author?.name ??' ',
-        commitAuthorAvatar: commit.commit?.author?.avatar_url ??' ',
+        commitAuthorAvatar: commit?.author?.avatar_url ??' ',
         commitDate: commit.commit?.author?.date ??' ',
 
 
@@ -51,7 +52,7 @@ export const pollCommits=async (projectId: string)=>{
     const {project,githubUrl}=await FetchProjectGithubUrl(projectId)
     const commitHashes=await getCommitHashes(githubUrl)
     const unprocessedCommits=await filterUnprocessedCommits(projectId,commitHashes)
-
+    console.log(unprocessedCommits)
     const summaryResponses=await Promise.allSettled(unprocessedCommits.map(commit=>{
         return summariseCommit(githubUrl,commit.commitHash)
     }))
@@ -65,7 +66,7 @@ export const pollCommits=async (projectId: string)=>{
     })
 
     const commits = await db.commit.createMany({
-        data: summaries.map((summary, index) => {
+          data: summaries.map((summary, index) => {
           console.log(`processing ${index}`);
           return {
             projectId: projectId,
@@ -74,10 +75,12 @@ export const pollCommits=async (projectId: string)=>{
             commitAuthorName: unprocessedCommits[index]!.commitAuthorName,
             commitAuthorAvatar: unprocessedCommits[index]!.commitAuthorAvatar,
             commitDate: unprocessedCommits[index]!.commitDate,
-            Summary:summary // Make sure this is correct
+            summary 
           };
         }),
       });
+     
+
       
     return commits
     
@@ -122,6 +125,8 @@ async function filterUnprocessedCommits(projectId:string,commitHashes:Response[]
     return unprocessedCommits
     
 }
-await pollCommits('cmdg22ssp0000uiiwui7wbnmp').then(console.log)
+await pollCommits('cmdt44buy0003uicueqfj7wul').then(console.log)
 
 
+console.log(await getCommitHashes(githubUrl)
+)
