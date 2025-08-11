@@ -72,3 +72,7 @@ model Commit{
     summary        String
 
 }
+
+model SourceaCodeEmbedding{
+  id String @id @default(cuid())
+}

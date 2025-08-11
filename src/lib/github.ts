@@ -8,7 +8,7 @@ export const octokit =new Octokit({
     auth: process.env.GITHUB_TOKEN,
 });
 
-const githubUrl='https://github.com/Parth-1104/git-inspect'
+const githubUrl=' https://github.com/Parth-1104/git-inspect'
 
 type Response={
     
