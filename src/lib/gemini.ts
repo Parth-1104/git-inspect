@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-
+import { Document } from '@langchain/core/documents';
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const model = genAI.getGenerativeModel({
@@ -48,3 +48,44 @@ ${diff}
 };
 
 
+export async function summariseCode(doc:Document)
+{
+ console.log("getting summary for",doc.metadata.source);
+
+ try{
+  const code=doc.pageContent.slice(0,10000);
+ const response=await model.generateContent([
+  `You are a intelligent software engineer who swpecilize in onboarding junior software engineeer in project `,
+  `You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} file
+  Here is the code:
+  ---
+  ${code}
+
+  ---
+
+  Give a summary no more than 100 words of the code above 
+  `,
+ ]);
+ return response.response.text()
+
+ }
+ catch(error)
+ {
+  return ' '
+ }
+ 
+}
+
+
+export async function generateEmbedding(summary:string)
+{
+  const model=genAI.getGenerativeModel({
+    model:'text-embedding-004'
+  })
+  const result=await model.embedContent(summary)
+  const embedding=result.embedding
+  return embedding.values
+
+}
+
+console.log(await generateEmbedding("hellow world"))

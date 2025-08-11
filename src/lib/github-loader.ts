@@ -1,15 +1,18 @@
 import { GithubRepoLoader } from '@langchain/community/document_loaders/web/github';
+import { Document } from '@langchain/core/documents';
+import { summariseCode, generateEmbedding } from './gemini';
+import { db } from '@/server/db'; // <-- Ensure correct Prisma import
 
 async function getDefaultBranch(repoUrl: string) {
-  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+  const match = repoUrl.match(/github\.com\/([^/]+)\/([^/]+?)(?:\.git|\/|$)/);
   if (!match) throw new Error('Invalid GitHub URL');
 
-  const [_, owner, repo] = match;
+  const [, owner, repo] = match;
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}`;
 
   const res = await fetch(apiUrl);
   if (!res.ok) throw new Error(`Failed to fetch repo info: ${res.statusText}`);
-  
+
   const data = await res.json();
   return data.default_branch;
 }
@@ -23,25 +26,61 @@ export const loadGithubRepo = async (githubUrl: string, githubToken?: string) =>
     ignoreFiles: ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb'],
     recursive: true,
     unknown: 'warn',
-    maxConcurrency: 5
+    maxConcurrency: 5,
   };
 
-  if (token && token.trim() !== '') {
+  if (token?.trim()) {
     options.accessToken = token.trim();
   }
 
   const loader = new GithubRepoLoader(githubUrl, options);
-  return await loader.load();
+  return loader.load();
 };
 
-// Test with a random public repo
-console.log(await loadGithubRepo('https://github.com/sindresorhus/awesome'));
+const generateEmbeddings = async (docs: Document[]) => {
+  return Promise.all(
+    docs.map(async (doc) => {
+      const summary = await summariseCode(doc);
+      const embedding = await generateEmbedding(summary);
+      return {
+        summary,
+        embedding,
+        sourceCode: doc.pageContent,
+        fileName: doc.metadata.source,
+      };
+    })
+  );
+};
 
-// Document {
-//     pageContent: "# Media\n\n## Logo\n\n- Primary color: `#fc60a8`\n- Secondary color: `#494368`\n- Font: [`Orbitron`](https://fonts.google.com/specimen/Orbitron)\n\nYou are free to use and modify the logo for your Awesome list or other usage.\n",
-//     metadata: {
-//       source: "media/readme.md",
-//       repository: "https://github.com/sindresorhus/awesome",
-//       branch: "main",
-//     },
-//     id: undefined,
+export const indexGithubRepo = async (projectId: string, githubUrl: string, githubToken?: string) => {
+  const docs = await loadGithubRepo(githubUrl, githubToken);
+  const allEmbeddings = await generateEmbeddings(docs);
+
+  await Promise.allSettled(
+    allEmbeddings.map(async (embedding, index) => {
+      console.log(`Processing ${index + 1} of ${allEmbeddings.length}`);
+      if (!embedding) return;
+
+      const sourceCodeEmbedding = await db.SourceCodeEmbedding.create({
+        // ⚠️ Ensure this matches your actual Prisma model name
+        data: {
+          summary: embedding.summary,
+          sourceCode: embedding.sourceCode,
+          fileName: embedding.fileName,
+          projectId,
+        },
+      });
+
+      await db.$executeRawUnsafe(`
+        UPDATE "SourceCodeEmbedding"
+        SET "summaryEmbedding" = $1::vector
+        WHERE "id" = $2
+      `, embedding.embedding, sourceCodeEmbedding.id);
+    })
+  );
+};
+
+// Example test
+// (async () => {
+//   console.log(await loadGithubRepo('https://github.com/sindresorhus/awesome'));
+// })();
