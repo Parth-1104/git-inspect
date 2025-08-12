@@ -1,91 +1,330 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Document } from '@langchain/core/documents';
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+import PQueue from 'p-queue';
 
-const model = genAI.getGenerativeModel({
-  model: 'gemini-2.0-flash',
-});
+// Configuration for multiple API keys
+const API_KEYS = [
+  process.env.GEMINI_API_KEY_1!,
+  process.env.GEMINI_API_KEY_2!,
+  // Add more keys as needed
+  // process.env.GEMINI_API_KEY_3!,
+].filter(key => key && key !== 'undefined');
 
-export const AisummariseCommit = async (diff: string) => {
-  const response = await model.generateContent([
-    `You are an expert software engineer.
+if (API_KEYS.length === 0) {
+  throw new Error('At least one GEMINI_API_KEY must be provided');
+}
 
-I will give you a Git diff of a commit.
+console.log(`Initialized with ${API_KEYS.length} API key(s)`);
 
-Your task is to:
-1. Summarize the overall purpose of the commit in 1–2 sentences.
-2. List each file affected and describe:
-  - Whether it was added, deleted, or modified.
-  - What specifically changed inside (e.g., added a function, fixed a bug, updated component props, etc.).
-3. Mention any new components, functions, or classes added and their purpose if applicable.
+// Create separate instances for each API key
+const geminiInstances = API_KEYS.map(apiKey => ({
+  genAI: new GoogleGenerativeAI(apiKey),
+  dailyCount: 0,
+  lastReset: new Date().toDateString(),
+  isBlocked: false,
+  blockUntil: null as Date | null
+}));
 
-You should write the output in markdown format using bullet points and code style where needed.
+// Create separate queues for each API key
+// Aggressive settings for maximum speed
+const queues = geminiInstances.map((_, index) => new PQueue({
+  concurrency: 3,     // Process 3 requests simultaneously per key
+  interval: 60000,    // 1 minute
+  intervalCap: 30     // Use full 30 RPM limit
+}));
 
-Here's a reminder of how Git diffs work:
-- File metadata lines look like:
-  \`diff --git a/lib/index.js b/lib/index.js\`
-  \`--- a/lib/index.js\`
-  \`+++ b/lib/index.js\`
-- New files show: \`new file mode 100644\`
-- Deleted files show: \`deleted file mode\`
-- \`@@ -12,6 +12,15 @@\` indicates the chunk of change
-- Lines starting with '+' are additions
-- Lines starting with '-' are deletions
+// Round-robin or least-loaded key selection
+let currentKeyIndex = 0;
 
-Example summary:
-- **Modified** \`lib/index.js\`: Raised the amount of returned recordings from \`10\` to \`100\`
-- **Added** \`components/NewHeader.tsx\`: Introduced a new header component for responsive layout
+function selectBestApiKey(): { index: number; instance: typeof geminiInstances[0] } | null {
+  const now = new Date();
+  
+  // Reset daily counters if new day
+  geminiInstances.forEach(instance => {
+    const today = new Date().toDateString();
+    if (today !== instance.lastReset) {
+      instance.dailyCount = 0;
+      instance.lastReset = today;
+      instance.isBlocked = false;
+      instance.blockUntil = null;
+    }
+  });
 
-Now analyze the following Git diff and provide a structured summary:
+  // Find available keys (not blocked and under daily limit)
+  const availableKeys = geminiInstances
+    .map((instance, index) => ({ instance, index }))
+    .filter(({ instance }) => {
+      // Check if temporarily blocked
+      if (instance.isBlocked && instance.blockUntil && now < instance.blockUntil) {
+        return false;
+      }
+      // Reset block if time has passed
+      if (instance.isBlocked && instance.blockUntil && now >= instance.blockUntil) {
+        instance.isBlocked = false;
+        instance.blockUntil = null;
+      }
+      // Check daily limit - more aggressive threshold
+      return instance.dailyCount < 1480; // Higher threshold, only 20 request buffer
+    });
 
+  if (availableKeys.length === 0) {
+    return null; // All keys exhausted
+  }
+
+  // Select least used key
+  const selected = availableKeys.reduce((prev, current) => 
+    prev.instance.dailyCount <= current.instance.dailyCount ? prev : current
+  );
+
+  return selected;
+}
+
+// Enhanced retry with multi-key awareness - optimized for speed
+async function retryWithBackoff<T>(
+  fn: (apiKey: string, genAI: GoogleGenerativeAI) => Promise<T>,
+  maxRetries = 2, // Reduced retries for faster failure
+  baseDelay = 1000 // Reduced base delay
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const selected = selectBestApiKey();
+    
+    if (!selected) {
+      throw new Error('All API keys have reached their limits. Please wait or add more keys.');
+    }
+
+    const { index, instance } = selected;
+    
+    try {
+      const result = await fn(API_KEYS[index], instance.genAI);
+      instance.dailyCount++;
+      return result;
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimit = error?.status === 429 || 
+                         error?.message?.includes('quota') ||
+                         error?.message?.includes('rate limit') ||
+                         error?.message?.includes('too many requests');
+      
+      if (isRateLimit) {
+        // Block this specific key for shorter time
+        instance.isBlocked = true;
+        instance.blockUntil = new Date(Date.now() + (10 * 1000)); // Block for only 10 seconds
+        console.log(`API key ${index + 1} hit rate limit, blocked for 10s`);
+        
+        // Try with different key immediately if available
+        const alternateKey = selectBestApiKey();
+        if (alternateKey) {
+          continue; // Try again with different key
+        }
+      }
+      
+      if (attempt < maxRetries) {
+        const delay = Math.min(baseDelay * attempt, 3000); // Cap at 3 seconds max
+        console.log(`Attempt ${attempt} failed, waiting ${delay/1000}s before retry`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error('All retries exhausted');
+}
+
+// Queue task to least loaded queue
+function addToLeastLoadedQueue<T>(task: () => Promise<T>): Promise<T> {
+  const selected = selectBestApiKey();
+  if (!selected) {
+    throw new Error('No API keys available');
+  }
+  
+  return queues[selected.index].add(task);
+}
+
+export const AisummariseCommit = async (diff: string): Promise<string> => {
+  const truncatedDiff = diff.length > 6000 ? diff.slice(0, 6000) + '\n... (truncated)' : diff;
+  
+  try {
+    return await addToLeastLoadedQueue(async () => {
+      return retryWithBackoff(async (apiKey, genAI) => {
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+        const response = await model.generateContent([
+          `You are an expert software engineer. Analyze this Git diff and provide a concise summary:
+
+1. Summarize the overall purpose in 1 sentence.
+2. List key changes by file (max 3 most important files).
+3. Be concise - maximum 150 words total.
+
+Diff:
 \`\`\`diff
-${diff}
+${truncatedDiff}
 \`\`\`
 `,
-  ]);
-
-  return response.response.text(); // NOTE: Gemini uses `response.response.text()` for output
+        ]);
+        return response.response.text();
+      });
+    });
+  } catch (error) {
+    console.error('Failed to summarize commit:', error);
+    return extractBasicDiffSummary(diff);
+  }
 };
 
+export async function summariseCode(doc: Document): Promise<string> {
+  console.log("getting summary for", doc.metadata.source);
+  
+  const code = doc.pageContent.slice(0, 8000);
+  
+  try {
+    return await addToLeastLoadedQueue(async () => {
+      return retryWithBackoff(async (apiKey, genAI) => {
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+        const response = await model.generateContent([
+          `Explain the purpose of this ${doc.metadata.source} file to a junior developer in exactly 50 words or less:
 
-export async function summariseCode(doc:Document)
-{
- console.log("getting summary for",doc.metadata.source);
-
- try{
-  const code=doc.pageContent.slice(0,10000);
- const response=await model.generateContent([
-  `You are a intelligent software engineer who swpecilize in onboarding junior software engineeer in project `,
-  `You are onboarding a junior software engineer and explaining to them the purpose of the ${doc.metadata.source} file
-  Here is the code:
-  ---
-  ${code}
-
-  ---
-
-  Give a summary no more than 100 words of the code above 
-  `,
- ]);
- return response.response.text()
-
- }
- catch(error)
- {
-  return ' '
- }
- 
+${code}
+`,
+        ]);
+        return response.response.text();
+      });
+    });
+  } catch (error) {
+    console.error(`Failed to summarize code for ${doc.metadata.source}:`, error);
+    return extractBasicCodeSummary(doc);
+  }
 }
 
-
-export async function generateEmbedding(summary:string)
-{
-  const model=genAI.getGenerativeModel({
-    model:'text-embedding-004'
-  })
-  const result=await model.embedContent(summary)
-  const embedding=result.embedding
-  return embedding.values
-
+export async function generateEmbedding(summary: string): Promise<number[] | null> {
+  try {
+    return await addToLeastLoadedQueue(async () => {
+      return retryWithBackoff(async (apiKey, genAI) => {
+        const embedModel = genAI.getGenerativeModel({ model: 'text-embedding-004' });
+        const result = await embedModel.embedContent(summary);
+        return result.embedding.values;
+      });
+    });
+  } catch (error) {
+    console.error('Failed to generate embedding:', error);
+    return null;
+  }
 }
 
-console.log(await generateEmbedding("hellow world"))
+// Fallback functions (unchanged)
+function extractBasicDiffSummary(diff: string): string {
+  const lines = diff.split('\n');
+  const additions = lines.filter(line => line.startsWith('+')).length;
+  const deletions = lines.filter(line => line.startsWith('-')).length;
+  const files = Array.from(new Set(
+    lines.filter(line => line.startsWith('+++') || line.startsWith('---'))
+      .map(line => line.split('\t')[0].replace(/^[\+\-]{3}\s*/, ''))
+  ));
+  
+  return `Code changes detected: ${additions} additions, ${deletions} deletions across ${files.length} files. Modified files: ${files.slice(0, 3).join(', ')}${files.length > 3 ? '...' : ''}`;
+}
+
+function extractBasicCodeSummary(doc: Document): string {
+  const filename = doc.metadata.source;
+  const content = doc.pageContent;
+  const lines = content.split('\n').length;
+  
+  let fileType = 'file';
+  if (filename.endsWith('.js') || filename.endsWith('.ts')) fileType = 'JavaScript/TypeScript';
+  else if (filename.endsWith('.py')) fileType = 'Python';
+  else if (filename.endsWith('.java')) fileType = 'Java';
+  else if (filename.endsWith('.cpp') || filename.endsWith('.c')) fileType = 'C/C++';
+  else if (filename.endsWith('.html')) fileType = 'HTML';
+  else if (filename.endsWith('.css')) fileType = 'CSS';
+  
+  return `${fileType} file with ${lines} lines. Unable to generate detailed summary due to rate limits.`;
+}
+
+// Enhanced monitoring functions
+export function getMultiKeyStatus() {
+  const now = new Date();
+  return geminiInstances.map((instance, index) => ({
+    keyIndex: index + 1,
+    dailyUsage: `${instance.dailyCount}/1500`,
+    usagePercentage: Math.round((instance.dailyCount / 1500) * 100),
+    isBlocked: instance.isBlocked,
+    blockUntil: instance.blockUntil,
+    secondsUntilUnblock: instance.blockUntil ? Math.max(0, Math.ceil((instance.blockUntil.getTime() - now.getTime()) / 1000)) : 0,
+    queuePending: queues[index].pending,
+    queueSize: queues[index].size
+  }));
+}
+
+export function getTotalCapacity() {
+  const availableKeys = geminiInstances.filter(instance => 
+    !instance.isBlocked && instance.dailyCount < 1400
+  ).length;
+  
+  const totalDailyUsage = geminiInstances.reduce((sum, instance) => sum + instance.dailyCount, 0);
+  const totalDailyLimit = geminiInstances.length * 1500;
+  
+  return {
+    availableKeys,
+    totalKeys: geminiInstances.length,
+    totalDailyUsage,
+    totalDailyLimit,
+    overallUsagePercentage: Math.round((totalDailyUsage / totalDailyLimit) * 100),
+    estimatedRequestsPerMinute: availableKeys * 30, // Full 30 RPM per available key
+    maxConcurrentRequests: availableKeys * 3, // 3 concurrent per key
+  };
+}
+
+export function pauseAllQueues() {
+  queues.forEach((queue, index) => {
+    queue.pause();
+    console.log(`Queue ${index + 1} paused`);
+  });
+}
+
+export function resumeAllQueues() {
+  queues.forEach((queue, index) => {
+    queue.start();
+    console.log(`Queue ${index + 1} resumed`);
+  });
+}
+
+// Add batch processing function for maximum speed
+export async function batchSummarizeCommits(diffs: string[]): Promise<string[]> {
+  console.log(`Processing ${diffs.length} commits in batch mode...`);
+  
+  // Process all diffs concurrently with automatic load balancing
+  const promises = diffs.map(diff => AisummariseCommit(diff));
+  return Promise.all(promises);
+}
+
+export async function batchSummarizeCode(docs: Document[]): Promise<string[]> {
+  console.log(`Processing ${docs.length} files in batch mode...`);
+  
+  // Process all documents concurrently
+  const promises = docs.map(doc => summariseCode(doc));
+  return Promise.all(promises);
+}
+
+// Add fast-track function that skips queues for urgent requests
+export async function fastTrackSummarize(content: string, type: 'commit' | 'code'): Promise<string> {
+  const selected = selectBestApiKey();
+  if (!selected) {
+    throw new Error('No API keys available for fast-track processing');
+  }
+
+  try {
+    const { instance } = selected;
+    const model = instance.genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+    
+    const prompt = type === 'commit' 
+      ? `Quickly summarize this git diff in 1-2 sentences:\n${content.slice(0, 3000)}`
+      : `What does this code file do? Answer in 1 sentence:\n${content.slice(0, 3000)}`;
+    
+    const response = await model.generateContent([prompt]);
+    instance.dailyCount++;
+    return response.response.text();
+  } catch (error) {
+    console.error('Fast-track failed:', error);
+    return type === 'commit' 
+      ? extractBasicDiffSummary(content)
+      : `Code file analysis unavailable due to rate limits`;
+  }
+}

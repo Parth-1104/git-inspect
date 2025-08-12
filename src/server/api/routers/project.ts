@@ -1,8 +1,7 @@
 import {z} from 'zod';
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { pollCommits } from '@/lib/github';
-import { indexGithubRepo } from '@/lib/github-loader';
-// import { pollCommits } from '@/lib/github';
+import { indexGithubRepo, previewFilesToProcess } from '@/lib/github-loader';
 
 export const projectRouter=createTRPCRouter({
     createProject:protectedProcedure.input(
@@ -14,6 +13,10 @@ export const projectRouter=createTRPCRouter({
     })
 
     ).mutation(async({ctx,input})=>{
+        if (!ctx.user.userId) {
+            throw new Error('User ID is required');
+        }
+        
         const project=await ctx.db.project.create({
             data:{
                 githubUrl:input.githubUrl,
@@ -31,7 +34,20 @@ export const projectRouter=createTRPCRouter({
         return project
     }),
 
+    previewIndex: protectedProcedure.input(z.object({
+        githubUrl: z.string(),
+        githubToken: z.string().optional(),
+        maxFiles: z.number().optional(),
+    })).mutation(async ({ input }) => {
+        const result = await previewFilesToProcess(input.githubUrl, input.githubToken, input.maxFiles ?? 30)
+        return result;
+    }),
+
     getProjects: protectedProcedure.query(async({ctx})=>{
+        if (!ctx.user.userId) {
+            throw new Error('User ID is required');
+        }
+        
         return await ctx.db.project.findMany({
             where:{
                 UserToProjects:{
@@ -46,7 +62,6 @@ export const projectRouter=createTRPCRouter({
     getCommits: protectedProcedure.input(z.object({
         projectId:z.string()
     })).query(async({ctx,input})=>{
-        pollCommits(input.projectId).then().catch(console.error)
         return await ctx.db.commit.findMany({
             where:{
             projectId:input.projectId

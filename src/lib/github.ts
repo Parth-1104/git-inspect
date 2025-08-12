@@ -50,8 +50,11 @@ export const pollCommits = async (projectId: string) => {
     commitHashes
   );
 
+  // Only select the latest 10 unprocessed commits for summarization
+  const commitsToSummarize = unprocessedCommits.slice(0, 10);
+
   const summaryResponses = await Promise.allSettled(
-    unprocessedCommits.map((commit) => {
+    commitsToSummarize.map((commit) => {
       return summariseCommit(githubUrl, commit.commitHash);
     })
   );
@@ -67,11 +70,11 @@ export const pollCommits = async (projectId: string) => {
     data: summaries.map((summary, index) => {
       return {
         projectId: projectId,
-        commitHash: unprocessedCommits[index]!.commitHash,
-        commitMessage: unprocessedCommits[index]!.commitMessage,
-        commitAuthorName: unprocessedCommits[index]!.commitAuthorName,
-        commitAuthorAvatar: unprocessedCommits[index]!.commitAuthorAvatar,
-        commitDate: unprocessedCommits[index]!.commitDate,
+        commitHash: commitsToSummarize[index]!.commitHash,
+        commitMessage: commitsToSummarize[index]!.commitMessage,
+        commitAuthorName: commitsToSummarize[index]!.commitAuthorName,
+        commitAuthorAvatar: commitsToSummarize[index]!.commitAuthorAvatar,
+        commitDate: commitsToSummarize[index]!.commitDate,
         summary,
       };
     }),
@@ -80,16 +83,49 @@ export const pollCommits = async (projectId: string) => {
   return commits;
 
   async function summariseCommit(githubUrl: string, commitHash: string) {
-    const { data } = await axios.get(
-      `${githubUrl}/commit/${commitHash}.diff`,
-      {
-        headers: {
-          Accept: 'application/vnd.github.v3.diff',
-        },
+    try {
+      // Extract owner and repo from githubUrl
+      const urlParts = githubUrl.split('/').slice(-2);
+      const owner = urlParts[0];
+      const repo = urlParts[1];
+      
+      if (!owner || !repo) {
+        throw new Error('Invalid GitHub URL format');
       }
-    );
+      
+      // Use GitHub API to get commit details
+      const { data: commitData } = await octokit.rest.repos.getCommit({
+        owner,
+        repo,
+        ref: commitHash,
+      });
 
-    return (await AisummariseCommit(data)) || ' ';
+      // Create a diff-like string from the commit data
+      let diffContent = `Commit: ${commitData.commit.message}\n\n`;
+      
+      if (commitData.files) {
+        for (const file of commitData.files) {
+          diffContent += `diff --git a/${file.filename} b/${file.filename}\n`;
+          diffContent += `--- a/${file.filename}\n`;
+          diffContent += `+++ b/${file.filename}\n`;
+          
+          if (file.patch) {
+            diffContent += file.patch + '\n';
+          } else if (file.status === 'added') {
+            diffContent += `+ New file added\n`;
+          } else if (file.status === 'removed') {
+            diffContent += `- File removed\n`;
+          }
+          diffContent += '\n';
+        }
+      }
+
+      const summary = await AisummariseCommit(diffContent);
+      return summary || ' ';
+    } catch (error) { 
+      console.error(`Error summarizing commit ${commitHash}:`, error);
+      return ' ';
+    }
   }
 
   async function FetchProjectGithubUrl(projectId: string) {
