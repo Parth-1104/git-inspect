@@ -5,6 +5,7 @@ import { ExternalLink, Github } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 import CommitLog from './commit-log'
+import AskQuestionCard from './ask-question-card'
 
 
 const page = () => {
@@ -12,7 +13,7 @@ const page = () => {
     const {project}=useProject()
   return (
     <div>
-      {project?.id ?? 'No project selected'}
+      {/* {project?.id ?? 'No project selected'} */}
 
       <div className='flex item-center justify-between flex-wrap gap-y-4'>
         {/* githublink */}
@@ -39,8 +40,8 @@ const page = () => {
         </div>
       </div>
       <div className="mt-4">
-        <div className='grid-cols-1 gap-4 sm:grid-cols-5'>
-          Ask que
+        <div className=' grid grid-cols-1 gap-4 sm:grid-cols-5'>
+          <AskQuestionCard/>
           meeting
         </div>
       </div>
