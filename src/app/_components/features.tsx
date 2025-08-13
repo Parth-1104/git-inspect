@@ -37,9 +37,9 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="w-full border-t border-primary/20 py-20">
+    <section id="features" className="w-full border-t border-primary/20 py-12 md:py-20">
       <div className="mx-auto w-full max-w-7xl px-6">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-6 md:mb-10 flex items-end justify-between">
           <div>
             <Badge variant="secondary">Features</Badge>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl bg-[linear-gradient(90deg,_#9ca3af_0%,_#ffffff_20%,_#9ca3af_40%,_#9ca3af_100%)] bg-clip-text text-transparent [background-size:200%_100%] [animation:shine_3s_linear_infinite]">
@@ -48,17 +48,17 @@ export function FeaturesSection() {
           </div>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-2 px-2 md:mx-0 md:px-0 md:grid md:gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <div key={f.title} className="group relative">
+            <div key={f.title} className="group relative snap-start shrink-0 w-64 sm:w-72 md:w-auto">
               <div className="pointer-events-none absolute inset-0 z-10 rounded-xl border-2 border-primary/30 opacity-70 transition duration-300 group-hover:border-primary group-hover:opacity-100"></div>
               <Card className="h-full border border-primary/15 bg-black">
                 <CardHeader>
                   <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <f.icon className="h-5 w-5" />
                   </div>
-                  <CardTitle className="text-lg text-foreground">{f.title}</CardTitle>
-                  <CardDescription className="text-muted-foreground">{f.description}</CardDescription>
+                  <CardTitle className="text-base md:text-lg text-foreground">{f.title}</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm text-muted-foreground">{f.description}</CardDescription>
                 </CardHeader>
                 <CardContent></CardContent>
               </Card>

@@ -34,9 +34,9 @@ const plans = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="w-full border-t border-primary/20 py-20">
+    <section id="pricing" className="w-full border-t border-primary/20 py-12 md:py-20">
       <div className="mx-auto w-full max-w-7xl px-6">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-6 md:mb-10 flex items-end justify-between">
           <div>
             <Badge variant="secondary">Billing</Badge>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl bg-[linear-gradient(90deg,_#9ca3af_0%,_#ffffff_20%,_#9ca3af_40%,_#9ca3af_100%)] bg-clip-text text-transparent [background-size:200%_100%] [animation:shine_3s_linear_infinite]">
@@ -45,25 +45,22 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-2 -mx-2 px-2 md:mx-0 md:px-0 md:grid md:gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={
-                (plan.highlighted ? "border-primary " : "border-primary/20 ") +
-                "bg-black transition hover:border-primary"
-              }
+              className={(plan.highlighted ? "border-primary " : "border-primary/20 ") + " bg-black transition hover:border-primary snap-start shrink-0 w-72 sm:w-80 md:w-auto"}
             >
               <CardHeader>
-                <CardTitle className="text-lg text-foreground">{plan.name}</CardTitle>
-                <CardDescription className="text-muted-foreground">{plan.description}</CardDescription>
+                <CardTitle className="text-base md:text-lg text-foreground">{plan.name}</CardTitle>
+                <CardDescription className="text-xs sm:text-sm text-muted-foreground">{plan.description}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="mb-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.period}</span>
+                  <span className="text-2xl md:text-3xl font-bold">{plan.price}</span>
+                  <span className="text-xs md:text-sm text-muted-foreground">{plan.period}</span>
                 </div>
-                <ul className="space-y-2 text-sm">
+                <ul className="space-y-1 text-xs md:text-sm">
                   {plan.features.map((f) => (
                     <li key={f} className="text-muted-foreground">• {f}</li>
                   ))}
@@ -71,11 +68,7 @@ export function PricingSection() {
               </CardContent>
               <CardFooter>
                 <Button
-                  className={
-                    plan.highlighted
-                      ? "w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                      : "w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }
+                  className={plan.highlighted ? "w-full bg-primary text-primary-foreground hover:bg-primary/90" : "w-full bg-secondary text-secondary-foreground hover:bg-secondary/80"}
                 >
                   {plan.cta}
                 </Button>
