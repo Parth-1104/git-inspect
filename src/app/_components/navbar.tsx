@@ -16,9 +16,14 @@ export function Navbar() {
 
         <nav className="hidden md:block">
           <ul className="flex items-center gap-6 text-sm font-medium">
-            <li>
+            {/* <li>
               <Link href="#product" className="text-muted-foreground transition-colors hover:text-foreground">
                 Product
+              </Link>
+            </li> */}
+            <li>
+              <Link href="/docs" className="text-muted-foreground transition-colors hover:text-foreground">
+                Docs
               </Link>
             </li>
             <li>
@@ -26,19 +31,14 @@ export function Navbar() {
                 Features
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link href="#solutions" className="text-muted-foreground transition-colors hover:text-foreground">
                 Solutions
               </Link>
-            </li>
+            </li> */}
             <li>
               <Link href="#pricing" className="text-muted-foreground transition-colors hover:text-foreground">
                 Pricing
-              </Link>
-            </li>
-            <li>
-              <Link href="#docs" className="text-muted-foreground transition-colors hover:text-foreground">
-                Docs
               </Link>
             </li>
           </ul>
@@ -55,7 +55,7 @@ export function Navbar() {
           </SignedOut>
           <SignedIn>
             <Button asChild variant="default" size="sm" className="px-4">
-              <Link href="/dashboard">DASHBOARD</Link>
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
           </SignedIn>
         </div>

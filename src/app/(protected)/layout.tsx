@@ -1,4 +1,4 @@
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar'
 import { UserButton } from '@clerk/nextjs'
 import {AppSidebar} from '../(protected)/app-sidebar'
 import React from 'react'
@@ -13,19 +13,21 @@ const SidebarLayout = ({children}:Props) => {
   return (
     <SidebarProvider>
       <AppSidebar/>
-     <main className='w-full m-2'>
-        <div className='flex item-center gap-2 border-sidebar-border bg-sidebar border shadow rounder-md p-2 px-4'>
-          {/* { <Searchbar></Searchbar> } */}
+      <SidebarInset className='w-full m-2'>
+        <div className='sticky top-2 z-20 flex items-center gap-2 rounded-lg bg-transparent p-2 px-4'>
+          <div className='md:hidden'>
+            <SidebarTrigger />
+          </div>
           <div className='ml-auto'></div>
           <UserButton/>
         </div>
         <div className='h-4'>
-        <div className='border-sidebar-border bg-sidebar border shadow rounded-md overflow-y-scroll h-[calc(100vh-6rem)] p-4'>
+          <div className='rounded-lg bg-transparent overflow-y-auto h-[calc(100vh-6rem)] p-4'>
             {children}
+          </div>
         </div>
-        </div>
-     </main>
-        </SidebarProvider>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 

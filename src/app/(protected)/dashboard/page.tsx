@@ -6,11 +6,30 @@ import Link from 'next/link'
 import React from 'react'
 import CommitLog from './commit-log'
 import AskQuestionCard from './ask-question-card'
-
+import { Button } from '@/components/ui/button'
+import { api } from '@/trpc/react'
+import { toast } from 'sonner'
 
 const page = () => {
+    const { projectId, project } = useProject()
+    const { refetch: refetchCommits } = api.project.getCommits.useQuery({ projectId })
+    const pollCommitsMutation = api.project.pollNewCommits.useMutation()
 
-    const {project}=useProject()
+    const handleFetchNewCommits = async () => {
+        if (!projectId) {
+            toast.error('No project selected.')
+            return
+        }
+        try {
+            await pollCommitsMutation.mutateAsync({ projectId })
+            toast.success('New commits fetched successfully!')
+            refetchCommits()
+        } catch (error) {
+            console.error('Error fetching new commits:', error)
+            toast.error('Failed to fetch new commits.')
+        }
+    }
+
   return (
     <div>
       {/* {project?.id ?? 'No project selected'} */}
@@ -40,13 +59,21 @@ const page = () => {
         </div>
       </div>
       <div className="mt-4">
-        <div className=' grid grid-cols-1 gap-4 sm:grid-cols-5'>
+        <div className=' grid grid-cols-2 gap-4 sm:grid-cols-2'>
           <AskQuestionCard/>
-          meeting
+         
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 border-t-2 border-primary pt-6 rounded-none flex justify-end">
+        <Button 
+            onClick={handleFetchNewCommits} 
+            disabled={pollCommitsMutation.isPending || !projectId}
+        >
+            {pollCommitsMutation.isPending ? 'Fetching...' : 'Fetch New Commits'}
+        </Button>
+      </div>
+      <div className="mt-8 border-t-2 border-primary pt-6 rounded-none">
        <CommitLog/>
       </div>
     </div>

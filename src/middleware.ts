@@ -1,8 +1,21 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
-const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)'])
+const isPublicRoute = createRouteMatcher(['/', '/sign-in(.*)', '/sign-up(.*)', '/docs(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
+  const { pathname } = req.nextUrl
+
+  // Serve Docusaurus static app from /public/docs with SPA fallback
+  if (pathname.startsWith('/docs')) {
+    const isFileRequest = pathname.includes('.')
+    if (!isFileRequest) {
+      const url = req.nextUrl.clone()
+      url.pathname = '/docs/index.html'
+      return NextResponse.rewrite(url)
+    }
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect()
   }

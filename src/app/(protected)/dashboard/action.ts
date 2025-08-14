@@ -4,6 +4,7 @@ import { createStreamableValue } from 'ai/rsc'
 import { createGoogleGenerativeAI } from '@ai-sdk/google' 
 import { generateEmbedding } from '@/lib/gemini'
 import { db } from '@/server/db'
+import { api } from '@/trpc/server'
 
 const google = createGoogleGenerativeAI({
     apiKey: process.env.GEMINI_API_KEY_2,
@@ -63,11 +64,21 @@ export async function askQuestion(question: string, projectId: string) {
                 maxTokens: 2000,
             })
 
+            let fullAnswer = ''
             for await (const delta of textStream) {
                 stream.update(delta)
+                fullAnswer += delta
             }
             
             stream.done()
+
+            await api.project.saveAnswer.mutate({
+                projectId,
+                question,
+                answer: fullAnswer,
+                fileReferences: result,
+            })
+
         } catch (error) {
             console.error('Error in streaming:', error)
             stream.update('Sorry, there was an error processing your request. Please try again.')

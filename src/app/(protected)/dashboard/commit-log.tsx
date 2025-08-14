@@ -3,7 +3,6 @@
 import React from 'react'
 import useProject from '@/hooks/use-project'
 import { api } from '@/trpc/react'
-import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 
@@ -15,47 +14,30 @@ const CommitLog = () => {
   if (commits.length === 0) return <div>No commits found.</div>
 
   return (
-    <ul className="space-y-6">
-      {commits.map((commit, commitIdx) => (
-        <li key={commit.id} className="relative flex gap-x-4">
-          {/* Timeline line */}
-          <div
-            className={cn(
-              'absolute left-0 top-0 w-px bg-zinc-200',
-              commitIdx === commits.length - 1 ? 'h-6' : 'h-full'
-            )}
-          />
-
-          {/* Commit Author Avatar */}
-          <img
-            src={commit.commitAuthorAvatar}
-            alt={`${commit.commitAuthorName}'s avatar`}
-            className="relative mt-4 size-8 rounded-full bg-zinc-100"
-          />
-
-          {/* Commit Card */}
-          <div className="flex-auto rounded-md bg-white p-3 ring-1 ring-inset ring-gray-200">
-            <div className="flex justify-between gap-x-4">
+    <ul className="space-y-4">
+      {commits.map((commit) => (
+        <li key={commit.id} className="relative">
+          <div className="rounded-md border border-primary bg-black p-4">
+            <div className="flex items-center gap-2">
+              <img
+                src={commit.commitAuthorAvatar}
+                alt={`${commit.commitAuthorName}'s avatar`}
+                className="size-7 rounded-full bg-muted/20"
+              />
               <Link
                 target="_blank"
                 href={`${project?.githubUrl}/commit/${commit.commitHash}`}
-                className="py-0.5 text-xs leading-5 text-gray-500"
+                className="text-xs leading-5 text-muted-foreground hover:underline"
               >
-                <span className="font-medium text-gray-900">
-                  {commit.commitAuthorName}
-                </span>
+                <span className="font-medium text-foreground">{commit.commitAuthorName}</span>
                 <span className="inline-flex items-center ml-2">
                   committed
                   <ExternalLink className="ml-1 size-4" />
                 </span>
               </Link>
             </div>
-
-            <span className="font-semibold">{commit.commitMessage}</span>
-
-            <pre className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-500">
-              {commit.summary}
-            </pre>
+            <div className="mt-2 font-semibold text-foreground">{commit.commitMessage}</div>
+            <div className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{commit.summary}</div>
           </div>
         </li>
       ))}

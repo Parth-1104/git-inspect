@@ -19,7 +19,7 @@ export function Hero() {
         </div>
        
 
-        <div className="relative h-[580px] mt-[20px] sm:h-[520px] overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-b from-primary/10 to-transparent md:h-auto mt-6 md:mt-0">
+        <div className="relative h-[580px] mt-[20px] sm:h-[520px] overflow-hidden rounded-xl border border-primary/30  md:h-auto mt-6 md:mt-0">
   <Spline
     scene="https://prod.spline.design/ymG2vng9ta3piEeD/scene.splinecode"
     className="absolute inset-0 h-full w-full pointer-events-none"

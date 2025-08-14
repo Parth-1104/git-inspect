@@ -1,0 +1,67 @@
+{
+  "docusaurus-plugin-content-docs": {
+    "default": {
+      "loadedVersions": [
+        {
+          "versionName": "current",
+          "label": "Next",
+          "banner": null,
+          "badge": false,
+          "noIndex": false,
+          "className": "docs-version-current",
+          "path": "/docs/",
+          "tagsPath": "/docs/tags",
+          "isLast": true,
+          "routePriority": -1,
+          "sidebarFilePath": "/Users/parthpankajsingh/Desktop/Git-Inspect/git-inspect/docs/sidebars.js",
+          "contentPath": "/Users/parthpankajsingh/Desktop/Git-Inspect/git-inspect/docs/docs",
+          "contentPathLocalized": "/Users/parthpankajsingh/Desktop/Git-Inspect/git-inspect/docs/i18n/en/docusaurus-plugin-content-docs/current",
+          "docs": [
+            {
+              "unversionedId": "index",
+              "id": "index",
+              "title": "Git-Inspect Docs",
+              "description": "Welcome to the Git-Inspect documentation.",
+              "source": "@site/docs/index.md",
+              "sourceDirName": ".",
+              "slug": "/",
+              "permalink": "/docs/",
+              "draft": false,
+              "tags": [],
+              "version": "current",
+              "frontMatter": {
+                "id": "index",
+                "title": "Git-Inspect Docs",
+                "slug": "/"
+              },
+              "sidebar": "docs"
+            }
+          ],
+          "drafts": [],
+          "sidebars": {
+            "docs": [
+              {
+                "type": "doc",
+                "id": "index"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "docusaurus-plugin-content-pages": {
+    "default": [
+      {
+        "type": "mdx",
+        "permalink": "/docs/",
+        "source": "@site/src/pages/index.md",
+        "frontMatter": {}
+      }
+    ]
+  },
+  "docusaurus-plugin-debug": {},
+  "docusaurus-theme-classic": {},
+  "docusaurus-bootstrap-plugin": {},
+  "docusaurus-mdx-fallback-plugin": {}
+}

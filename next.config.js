@@ -5,6 +5,16 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  async rewrites() {
+    // Allow client-side routing inside the Docusaurus static export
+    return [
+      {
+        source: "/docs/:path*",
+        destination: "/docs/:path*",
+      },
+    ];
+  },
+};
 
 export default config;
