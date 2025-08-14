@@ -13,6 +13,13 @@ import { api } from '@/trpc/react'
 import { toast } from 'sonner'
 import useRefetch from '@/hooks/use-refetch'
 
+// Blinking placeholder component
+const BlinkingPlaceholder = ({ text }: { text: string }) => (
+  <span className="inline-block animate-pulse text-muted-foreground/60">
+    {text}
+  </span>
+)
+
 const AskQuestionCard = () => {
   const { project } = useProject()
   const [open, setOpen] = useState(false)
@@ -154,14 +161,21 @@ const AskQuestionCard = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
-            <Textarea
-              placeholder='Which file should I edit to change the home page?'
-              value={question}
-              onChange={e => setQuestion(e.target.value)}
-              disabled={loading}
-              className="min-h-[100px] resize-none"
-              rows={4}
-            />
+            <div className="relative">
+              <Textarea
+                placeholder=""
+                value={question}
+                onChange={e => setQuestion(e.target.value)}
+                disabled={loading}
+                className="min-h-[100px] resize-none"
+                rows={4}
+              />
+              {!question && (
+                <div className="absolute top-2 left-3 pointer-events-none text-muted-foreground/60">
+                  <BlinkingPlaceholder text="Which file should I edit to change the home page?" />
+                </div>
+              )}
+            </div>
             <Button
               type='submit'
               disabled={loading || !question.trim()}

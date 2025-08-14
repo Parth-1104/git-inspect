@@ -1,13 +1,20 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar'
 import { UserButton } from '@clerk/nextjs'
 import {AppSidebar} from '../(protected)/app-sidebar'
-import React from 'react'
+import React, { Suspense } from 'react'
 
+// Loading component for the layout
+const LayoutSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-16 bg-gray-200 rounded-md mb-4"></div>
+    <div className="h-32 bg-gray-200 rounded-md mb-4"></div>
+    <div className="h-64 bg-gray-200 rounded-md"></div>
+  </div>
+)
 
 type Props={
     children:React.ReactNode
 }
-
 
 const SidebarLayout = ({children}:Props) => {
   return (
@@ -23,7 +30,9 @@ const SidebarLayout = ({children}:Props) => {
         </div>
         <div className='h-4'>
           <div className='rounded-lg bg-transparent overflow-y-auto h-[calc(100vh-6rem)] p-4'>
-            {children}
+            <Suspense fallback={<LayoutSkeleton />}>
+              {children}
+            </Suspense>
           </div>
         </div>
       </SidebarInset>

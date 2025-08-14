@@ -68,24 +68,24 @@ const QAPage = () => {
                 <h3 className="text-lg font-semibold mb-3">Answer:</h3>
                 <MDEditor.Markdown 
                   source={question.answer} 
-                  className="max-w-full"
+                  className="max-w-full "
                 />
               </div>
             </div>
 
             {/* Code References Section */}
             {question.filesReferences && Array.isArray(question.filesReferences) && question.filesReferences.length > 0 && (
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 h-full min-h-[80vh]">
                 <h3 className="text-lg font-semibold mb-3">
                   📁 Referenced Files ({question.filesReferences.length})
                 </h3>
-                <div className="w-full">
+                <div className="w-full h-full">
                   <Codereferences
                     fileReferences={question.filesReferences.map((file: any) => ({
                       filename: file.fileName || file.filename || 'unknown',
                       sourceCode: file.sourceCode || file.source_code || '',
                       summary: file.summary || ''
-                    }))}
+                    } ))}
                   />
                 </div>
               </div>

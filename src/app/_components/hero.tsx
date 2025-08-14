@@ -1,8 +1,20 @@
 "use client";
 
 import Spline from "@splinetool/react-spline";
+import { useState } from "react";
 
-export function Hero() {
+interface HeroProps {
+  onSplineLoaded?: () => void;
+}
+
+export function Hero({ onSplineLoaded }: HeroProps) {
+  const [isSplineLoaded, setIsSplineLoaded] = useState(false);
+
+  const handleSplineLoad = () => {
+    setIsSplineLoaded(true);
+    onSplineLoaded?.();
+  };
+
   return (
     <section className="relative w-full overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(80%_50%_at_50%_0%,_oklch(0.2_0_0)_0%,_transparent_50%)]" />
@@ -20,15 +32,16 @@ export function Hero() {
        
 
         <div className="relative h-[580px] mt-[20px] sm:h-[520px] overflow-hidden rounded-xl border border-primary/30  md:h-auto mt-6 md:mt-0">
-  <Spline
-    scene="https://prod.spline.design/ymG2vng9ta3piEeD/scene.splinecode"
-    className="absolute inset-0 h-full w-full pointer-events-none"
-  />
-  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
-  
-  {/* Black rectangle clipped to container */}
-  <div className="absolute bottom-4 right-4 w-48 h-10 bg-[#141413] z-10  md:block" />
-</div>
+          <Spline
+            scene="https://prod.spline.design/ymG2vng9ta3piEeD/scene.splinecode"
+            className="absolute inset-0 h-full w-full pointer-events-none"
+            onLoad={handleSplineLoad}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          
+          {/* Black rectangle clipped to container */}
+          <div className="absolute bottom-4 right-4 w-58 h-18 bg-[#090909] z-10  md:block" />
+        </div>
 
       </div>
     </section>

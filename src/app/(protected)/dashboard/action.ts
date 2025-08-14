@@ -4,7 +4,7 @@ import { createStreamableValue } from 'ai/rsc'
 import { createGoogleGenerativeAI } from '@ai-sdk/google' 
 import { generateEmbedding } from '@/lib/gemini'
 import { db } from '@/server/db'
-import { api } from '@/trpc/server'
+import { auth } from '@clerk/nextjs/server'
 
 const google = createGoogleGenerativeAI({
     apiKey: process.env.GEMINI_API_KEY_2,
@@ -12,6 +12,12 @@ const google = createGoogleGenerativeAI({
 
 export async function askQuestion(question: string, projectId: string) {
     const stream = createStreamableValue()
+    
+    // Get the current user
+    const { userId } = await auth()
+    if (!userId) {
+        throw new Error('User not authenticated')
+    }
     
     const queryVector = await generateEmbedding(question)
     const vectorQuery = `[${queryVector?.join(',')}]`
@@ -72,11 +78,15 @@ export async function askQuestion(question: string, projectId: string) {
             
             stream.done()
 
-            await api.project.saveAnswer.mutate({
-                projectId,
-                question,
-                answer: fullAnswer,
-                fileReferences: result,
+            // Save the question and answer directly to the database
+            await db.question.create({
+                data: {
+                    answer: fullAnswer,
+                    filesReferences: result,
+                    projectId: projectId,
+                    question: question,
+                    userId: userId
+                }
             })
 
         } catch (error) {

@@ -4,6 +4,16 @@ import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 
 export function Navbar() {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
+
   return (
     <header className="w-full border-b border-primary/20 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-6">
@@ -27,9 +37,12 @@ export function Navbar() {
               </Link>
             </li>
             <li>
-              <Link href="#features" className="text-muted-foreground transition-colors hover:text-foreground">
+              <button 
+                onClick={() => scrollToSection('features')}
+                className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+              >
                 Features
-              </Link>
+              </button>
             </li>
             {/* <li>
               <Link href="#solutions" className="text-muted-foreground transition-colors hover:text-foreground">
@@ -37,9 +50,12 @@ export function Navbar() {
               </Link>
             </li> */}
             <li>
-              <Link href="#pricing" className="text-muted-foreground transition-colors hover:text-foreground">
+              <button 
+                onClick={() => scrollToSection('pricing')}
+                className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
+              >
                 Pricing
-              </Link>
+              </button>
             </li>
           </ul>
         </nav>
@@ -55,7 +71,7 @@ export function Navbar() {
           </SignedOut>
           <SignedIn>
             <Button asChild variant="default" size="sm" className="px-4">
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard" prefetch={true}>Dashboard</Link>
             </Button>
           </SignedIn>
         </div>

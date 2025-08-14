@@ -52,7 +52,7 @@ export function AppSidebar(){
             <SidebarHeader>
             <div className="flex items-center gap-2">
   {open && (
-    <Link href="/" className="text-xl font-bold text-primary/80">
+    <Link href="/" className="text-xl font-bold text-primary/80 bg-[linear-gradient(90deg,_#9ca3af_0%,_#ffffff_20%,_#9ca3af_40%,_#9ca3af_100%)] bg-clip-text text-transparent [background-size:200%_100%] [animation:shine_3s_linear_infinite]">
       Git-Inspect
     </Link>
   )}
