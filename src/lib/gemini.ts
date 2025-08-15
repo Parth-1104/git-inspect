@@ -263,8 +263,8 @@ export function getMultiKeyStatus() {
     isBlocked: instance.isBlocked,
     blockUntil: instance.blockUntil,
     secondsUntilUnblock: instance.blockUntil ? Math.max(0, Math.ceil((instance.blockUntil.getTime() - now.getTime()) / 1000)) : 0,
-    queuePending: queues[index].pending,
-    queueSize: queues[index].size
+    queuePending: queues[index]?.pending,
+    queueSize: queues[index]?.size
   }));
 }
 

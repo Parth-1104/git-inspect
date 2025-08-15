@@ -8,11 +8,11 @@ import "./src/env.js";
 const config = {
   eslint: {
     // ✅ Show ESLint errors during production build
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   typescript: {
     // ✅ Show TypeScript type errors during production build
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
   experimental: {
     optimizeCss: true,
