@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import { pollCommits } from "@/lib/github";
 
 export const postRouter = createTRPCRouter({
@@ -12,39 +12,24 @@ export const postRouter = createTRPCRouter({
       };
     }),
 
-  createPost: publicProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      // simulate a slow db call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      return ctx.db.post.create({
-        data: {
-          name: input.name,
-        },
-      });
-    }),
-
-  getLatest: publicProcedure.query(({ ctx }) => {
-    return ctx.db.post.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-  }),
-
-  createProject: publicProcedure
+  createProject: protectedProcedure
     .input(z.object({
       name: z.string().min(1),
       githubUrl: z.string().url(),
       githubToken: z.string().optional()
     }))
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.user.userId) {
+        throw new Error('User ID is required');
+      }
+      
       const project = await ctx.db.project.create({
         data: {
           name: input.name,
           githubUrl: input.githubUrl,
           UserToProjects: {
             create: {
-              userId: ctx.userId,
+              userId: ctx.user.userId,
             }
           }
         }
@@ -58,12 +43,16 @@ export const postRouter = createTRPCRouter({
       return project
     }),
 
-  getProjects: publicProcedure.query(async ({ ctx }) => {
+  getProjects: protectedProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.userId) {
+      throw new Error('User ID is required');
+    }
+    
     const projects = await ctx.db.project.findMany({
       where: {
         UserToProjects: {
           some: {
-            userId: ctx.userId,
+            userId: ctx.user.userId,
           }
         }
       }
