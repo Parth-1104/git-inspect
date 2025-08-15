@@ -14,6 +14,10 @@ const config = {
     // 🚫 Ignore TypeScript type errors during production build
     ignoreBuildErrors: true,
   },
+  experimental: {
+    optimizeCss: true,
+    swcPlugins: [],
+  },
   async rewrites() {
     // Allow client-side routing inside the Docusaurus static export
     return [
