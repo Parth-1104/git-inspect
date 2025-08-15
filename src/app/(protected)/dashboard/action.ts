@@ -1,6 +1,5 @@
 'use server'
 import { streamText } from 'ai'
-import { createStreamableValue } from 'ai/rsc'
 import { createGoogleGenerativeAI } from '@ai-sdk/google' 
 import { generateEmbedding } from '@/lib/gemini'
 import { db } from '@/server/db'
@@ -11,8 +10,6 @@ const google = createGoogleGenerativeAI({
 })
 
 export async function askQuestion(question: string, projectId: string) {
-    const stream = createStreamableValue()
-    
     // Get the current user
     const { userId } = await auth()
     if (!userId) {
@@ -62,42 +59,35 @@ export async function askQuestion(question: string, projectId: string) {
     AI assistant will not invent anything that is not drawn directly from the context.
     Answer in markdown syntax, with code snippets if needed. Be as detailed as possible when answering.`
 
-    ;(async () => {
-        try {
-            const { textStream } = await streamText({
-                model: google('gemini-1.5-flash'),
-                prompt,
-                maxTokens: 2000,
-            })
+    try {
+        const { textStream } = await streamText({
+            model: google('gemini-1.5-flash'),
+            prompt,
+        })
 
-            let fullAnswer = ''
-            for await (const delta of textStream) {
-                stream.update(delta)
-                fullAnswer += delta
-            }
-            
-            stream.done()
-
-            // Save the question and answer directly to the database
-            await db.question.create({
-                data: {
-                    answer: fullAnswer,
-                    filesReferences: result,
-                    projectId: projectId,
-                    question: question,
-                    userId: userId
-                }
-            })
-
-        } catch (error) {
-            console.error('Error in streaming:', error)
-            stream.update('Sorry, there was an error processing your request. Please try again.')
-            stream.done()
+        let fullAnswer = ''
+        for await (const delta of textStream) {
+            fullAnswer += delta
         }
-    })()
 
-    return {
-        output: stream.value,
-        filesReferences: result
+        // Save the question and answer directly to the database
+        await db.question.create({
+            data: {
+                answer: fullAnswer,
+                filesReferences: result,
+                projectId: projectId,
+                question: question,
+                userId: userId
+            }
+        })
+
+        return {
+            output: fullAnswer,
+            filesReferences: result
+        }
+
+    } catch (error) {
+        console.error('Error in AI processing:', error)
+        throw new Error('Sorry, there was an error processing your request. Please try again.')
     }
 }

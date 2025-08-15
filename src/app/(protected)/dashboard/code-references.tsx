@@ -10,9 +10,9 @@ type Props = {
 }
 
 const Codereferences = ({fileReferences}: Props) => {
-  if (!fileReferences || fileReferences.length === 0) return null
+  const [tab, setTab] = useState(fileReferences?.[0]?.filename || '')
   
-  const [tab, setTab] = useState(fileReferences[0].filename)
+  if (!fileReferences || fileReferences.length === 0) return null
   
   return (
     <div className='max-w-[70vw]'>

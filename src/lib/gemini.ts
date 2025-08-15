@@ -96,6 +96,12 @@ async function retryWithBackoff<T>(
 
     const { index, instance } = selected;
     
+    // Safety check to ensure the index is valid
+    if (index < 0 || index >= API_KEYS.length || !API_KEYS[index]) {
+      console.error(`Invalid API key index: ${index}, API_KEYS length: ${API_KEYS.length}`);
+      continue; // Try with a different key
+    }
+    
     try {
       const result = await fn(API_KEYS[index], instance.genAI);
       instance.dailyCount++;
@@ -138,7 +144,12 @@ function addToLeastLoadedQueue<T>(task: () => Promise<T>): Promise<T> {
     throw new Error('No API keys available');
   }
   
-  return queues[selected.index].add(task);
+  // Safety check to ensure the queue index is valid
+  if (selected.index < 0 || selected.index >= queues.length || !queues[selected.index]) {
+    throw new Error(`Invalid queue index: ${selected.index}, queues length: ${queues.length}`);
+  }
+  
+  return queues[selected.index]!.add(task);
 }
 
 export const AisummariseCommit = async (diff: string): Promise<string> => {
@@ -216,7 +227,11 @@ function extractBasicDiffSummary(diff: string): string {
   const deletions = lines.filter(line => line.startsWith('-')).length;
   const files = Array.from(new Set(
     lines.filter(line => line.startsWith('+++') || line.startsWith('---'))
-      .map(line => line.split('\t')[0].replace(/^[\+\-]{3}\s*/, ''))
+      .map(line => {
+        const parts = line.split('\t');
+        return parts[0] ? parts[0].replace(/^[\+\-]{3}\s*/, '') : '';
+      })
+      .filter(filename => filename) // Remove empty filenames
   ));
   
   return `Code changes detected: ${additions} additions, ${deletions} deletions across ${files.length} files. Modified files: ${files.slice(0, 3).join(', ')}${files.length > 3 ? '...' : ''}`;

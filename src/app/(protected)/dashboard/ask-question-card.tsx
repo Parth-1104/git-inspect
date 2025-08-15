@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea'
 import useProject from '@/hooks/use-project'
 import React, { useState } from 'react'
 import { askQuestion } from './action'
-import { readStreamableValue } from 'ai/rsc'
 import MDEditor from '@uiw/react-md-editor'
 import Codereferences from './code-references'
 import { api } from '@/trpc/react'
@@ -41,14 +40,9 @@ const AskQuestionCard = () => {
     try {
       const { output, filesReferences } = await askQuestion(question, project.id)
       setFileReferences(filesReferences)
-      
-      for await (const delta of readStreamableValue(output)) {
-        if (delta) {
-          setAnswer(ans => ans + delta)
-        }
-      }
+      setAnswer(output) // Set the answer directly since it's no longer streaming
     } catch (error) {
-      console.error('Error processing stream:', error)
+      console.error('Error processing question:', error)
       setAnswer('Sorry, there was an error processing your question. Please try again.')
     } finally {
       setLoading(false)

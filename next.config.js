@@ -7,12 +7,12 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   eslint: {
-    // 🚫 Ignore ESLint errors during production build
-    ignoreDuringBuilds: true,
+    // ✅ Show ESLint errors during production build
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    // 🚫 Ignore TypeScript type errors during production build
-    ignoreBuildErrors: true,
+    // ✅ Show TypeScript type errors during production build
+    ignoreBuildErrors: false,
   },
   experimental: {
     optimizeCss: true,

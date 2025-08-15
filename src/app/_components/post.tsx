@@ -9,7 +9,7 @@ export function LatestPost() {
 
   const utils = api.useUtils();
   const [name, setName] = useState("");
-  const createPost = api.post.create.useMutation({
+  const createPost = api.post.createPost.useMutation({
     onSuccess: async () => {
       await utils.post.invalidate();
       setName("");

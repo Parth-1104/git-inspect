@@ -24,7 +24,7 @@ const DashboardSkeleton = () => (
   </div>
 )
 
-const page = () => {
+const Page = () => {
     const { projectId, project, projects } = useProject()
     const { refetch: refetchCommits } = api.project.getCommits.useQuery({ projectId }, {
         enabled: !!projectId,
@@ -63,7 +63,7 @@ const page = () => {
                 {projects.length > 0 && (
                     <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Available projects:</p>
-                        {projects.map((p) => (
+                        {projects.map((p: { id: string; name: string; githubUrl: string }) => (
                             <div key={p.id} className="text-sm">
                                 {p.name} - {p.githubUrl}
                             </div>
@@ -136,4 +136,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page
