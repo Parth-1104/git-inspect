@@ -111,9 +111,9 @@ const generateEmbeddings = async (docs: Document[], batchSize: number = 5) => {
     try {
       const batchResults = await Promise.all(
         batch.map(async (doc) => {
-          console.log(`Getting summary for ${doc.metadata.source}`);
           const summary = await summariseCode(doc);
           const embedding = await generateEmbedding(summary);
+          
           return {
             summary,
             embedding,
@@ -123,7 +123,11 @@ const generateEmbeddings = async (docs: Document[], batchSize: number = 5) => {
         })
       );
       
-      results.push(...batchResults);
+      // Filter out results with null embeddings
+      const validResults = batchResults.filter((result): result is { summary: string; embedding: number[]; sourceCode: string; fileName: string } => 
+        result.embedding !== null
+      );
+      results.push(...validResults);
       
       // Wait between batches (respecting free tier: 15 requests/minute)
       if (i + batchSize < docs.length) {

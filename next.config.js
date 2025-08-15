@@ -15,17 +15,8 @@ const config = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    optimizeCss: false,
+    optimizeCss: true,
     swcPlugins: [],
-  },
-  async rewrites() {
-    // Allow client-side routing inside the Docusaurus static export
-    return [
-      {
-        source: "/docs/:path*",
-        destination: "/docs/:path*",
-      },
-    ];
   },
 };
 

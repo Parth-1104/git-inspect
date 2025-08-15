@@ -34,11 +34,6 @@ export function Navbar() {
               </Link>
             </li> */}
             <li>
-              <Link href="/docs" className="text-muted-foreground transition-colors hover:text-foreground">
-                Docs
-              </Link>
-            </li>
-            <li>
               <button 
                 onClick={() => scrollToSection('features')}
                 className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"

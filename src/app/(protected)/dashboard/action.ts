@@ -70,17 +70,6 @@ export async function askQuestion(question: string, projectId: string) {
             fullAnswer += delta
         }
 
-        // Save the question and answer directly to the database
-        await db.question.create({
-            data: {
-                answer: fullAnswer,
-                filesReferences: result,
-                projectId: projectId,
-                question: question,
-                userId: userId
-            }
-        })
-
         return {
             output: fullAnswer,
             filesReferences: result
