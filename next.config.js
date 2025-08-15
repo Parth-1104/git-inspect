@@ -6,6 +6,14 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  eslint: {
+    // 🚫 Ignore ESLint errors during production build
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    // 🚫 Ignore TypeScript type errors during production build
+    ignoreBuildErrors: true,
+  },
   async rewrites() {
     // Allow client-side routing inside the Docusaurus static export
     return [

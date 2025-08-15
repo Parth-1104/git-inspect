@@ -23,11 +23,7 @@ const items=[
         url:"/qa",
         icon:Bot
     },
-    {
-        title:"Meeting",
-        url:"/meeting",
-        icon:Presentation
-    },
+    
     {
         title:"Billing",
         url:"/billing",
@@ -52,8 +48,13 @@ export function AppSidebar(){
             <SidebarHeader>
             <div className="flex items-center gap-2">
   {open && (
-    <Link href="/" className="text-xl font-bold text-primary/80 bg-[linear-gradient(90deg,_#9ca3af_0%,_#ffffff_20%,_#9ca3af_40%,_#9ca3af_100%)] bg-clip-text text-transparent [background-size:200%_100%] [animation:shine_3s_linear_infinite]">
-      Git-Inspect
+    <Link href="/" className="flex items-center gap-2">
+      <div className="h-7 w-8 rounded-sm bg-primary flex items-center justify-center">
+        <img src="/logo.png" alt="Git Inspect logo" className="h-5 w-5" />
+      </div>
+      <span className="text-xl font-bold text-primary/80 bg-[linear-gradient(90deg,_#9ca3af_0%,_#ffffff_20%,_#9ca3af_40%,_#9ca3af_100%)] bg-clip-text text-transparent [background-size:200%_100%] [animation:shine_3s_linear_infinite]">
+        Git-Inspect
+      </span>
     </Link>
   )}
 </div>

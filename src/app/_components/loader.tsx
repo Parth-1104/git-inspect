@@ -16,10 +16,8 @@ export function Loader() {
       <div className="relative z-10 text-center">
         {/* Logo/Icon */}
         <div className="mb-8">
-          <div className="mx-auto h-16 w-16 rounded-xl bg-gradient-to-r from-primary to-primary-foreground shadow-2xl shadow-primary/25 animate-pulse">
-            <div className="flex h-full w-full items-center justify-center">
-              <div className="h-8 w-8 rounded-sm bg-background shadow-lg"></div>
-            </div>
+          <div className="mx-auto h-16 w-16 rounded-xl bg-gradient-to-r from-primary to-primary-foreground shadow-2xl shadow-primary/25 animate-pulse flex items-center justify-center">
+            <img src="/favicon.png" alt="Git Inspect logo" className="h-14 w-13 object-contain" />
           </div>
         </div>
 

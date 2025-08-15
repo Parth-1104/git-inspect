@@ -10,8 +10,10 @@ import { Button } from '@/components/ui/button'
 import { api } from '@/trpc/react'
 import { toast } from 'sonner'
 import ArchiveButton from './archive-button'
-import InviteButton from './invitebutton'
+// import InviteButton from './invitebutton'
+const InviteButton=dynamic(()=> import('./invitebutton'),{ssr:false})
 import TeamMembers from './teammember'
+import dynamic from 'next/dynamic'
 
 // Loading component for better UX
 const DashboardSkeleton = () => (
