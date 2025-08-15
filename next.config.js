@@ -15,7 +15,7 @@ const config = {
     ignoreBuildErrors: true,
   },
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false,
     swcPlugins: [],
   },
   async rewrites() {
