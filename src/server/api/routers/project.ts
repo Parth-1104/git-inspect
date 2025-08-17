@@ -70,6 +70,59 @@ export const projectRouter=createTRPCRouter({
         })
     }),
 
+    getBreakingChangesStats: protectedProcedure.input(z.object({
+        projectId: z.string(),
+        days: z.number().optional().default(30)
+    })).query(async({ctx, input}) => {
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - input.days);
+
+        const commits = await ctx.db.commit.findMany({
+            where: {
+                projectId: input.projectId,
+                commitDate: {
+                    gte: daysAgo
+                }
+            },
+            orderBy: { commitDate: "desc" }
+        });
+
+        const breakingCommits = commits.filter(commit => commit.hasBreakingChanges);
+        const severityCounts = breakingCommits.reduce((acc, commit) => {
+            const severity = commit.breakingChangeSeverity || 'unknown';
+            acc[severity] = (acc[severity] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        // Weekly breakdown
+        const weeklyData = commits.reduce((acc, commit) => {
+            const weekStart = new Date(commit.commitDate);
+            weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+            const weekKey = weekStart.toISOString().split('T')[0];
+            
+            if (!acc[weekKey]) {
+                acc[weekKey] = { breaking: 0, total: 0, week: weekStart.toLocaleDateString() };
+            }
+            
+            acc[weekKey].total += 1;
+            if (commit.hasBreakingChanges) {
+                acc[weekKey].breaking += 1;
+            }
+            
+            return acc;
+        }, {} as Record<string, { breaking: number; total: number; week: string }>);
+
+        return {
+            totalCommits: commits.length,
+            breakingCommits: breakingCommits.length,
+            breakingChangePercentage: commits.length > 0 ? (breakingCommits.length / commits.length) * 100 : 0,
+            severityCounts,
+            weeklyData: Object.values(weeklyData).sort((a, b) => new Date(a.week).getTime() - new Date(b.week).getTime()),
+            migrationRequiredCount: breakingCommits.filter(c => c.migrationRequired).length,
+            recentBreakingChanges: breakingCommits.slice(0, 10)
+        };
+    }),
+
     pollNewCommits: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .mutation(async ({ input }) => {

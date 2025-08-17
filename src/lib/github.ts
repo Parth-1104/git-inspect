@@ -1,7 +1,7 @@
 import { Octokit } from 'octokit';
 import { db } from '@/server/db';
 import axios from 'axios';
-import { AisummariseCommit } from './gemini';
+import { AisummariseCommit, detectBreakingChanges } from './gemini';
 
 export const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
@@ -53,21 +53,33 @@ export const pollCommits = async (projectId: string) => {
   // Only select the latest 10 unprocessed commits for summarization
   const commitsToSummarize = unprocessedCommits.slice(0, 10);
 
-  const summaryResponses = await Promise.allSettled(
-    commitsToSummarize.map((commit) => {
-      return summariseCommit(githubUrl, commit.commitHash);
+  const commitAnalyses = await Promise.allSettled(
+    commitsToSummarize.map(async (commit) => {
+      return await analyzeCommit(githubUrl, commit.commitHash, commit.commitMessage);
     })
   );
 
-  const summaries = summaryResponses.map((response) => {
-    if (response.status === 'fulfilled') {
-      return response.value as string;
-    }
-    return ' ';
-  });
-
   const commits = await db.commit.createMany({
-    data: summaries.map((summary, index) => {
+    data: commitAnalyses.map((response, index) => {
+      if (response.status === 'fulfilled') {
+        const { summary, breakingChanges } = response.value;
+        return {
+          projectId: projectId,
+          commitHash: commitsToSummarize[index]!.commitHash,
+          commitMessage: commitsToSummarize[index]!.commitMessage,
+          commitAuthorName: commitsToSummarize[index]!.commitAuthorName,
+          commitAuthorAvatar: commitsToSummarize[index]!.commitAuthorAvatar,
+          commitDate: commitsToSummarize[index]!.commitDate,
+          summary: summary || ' ',
+          hasBreakingChanges: breakingChanges.hasBreakingChanges,
+          breakingChangeSeverity: breakingChanges.severity,
+          breakingChangeDetails: breakingChanges.details,
+          affectedComponents: breakingChanges.affectedComponents ? JSON.stringify(breakingChanges.affectedComponents) : null,
+          migrationRequired: breakingChanges.migrationRequired,
+          migrationSteps: breakingChanges.migrationSteps,
+        };
+      }
+      // Fallback for failed analysis
       return {
         projectId: projectId,
         commitHash: commitsToSummarize[index]!.commitHash,
@@ -75,14 +87,20 @@ export const pollCommits = async (projectId: string) => {
         commitAuthorName: commitsToSummarize[index]!.commitAuthorName,
         commitAuthorAvatar: commitsToSummarize[index]!.commitAuthorAvatar,
         commitDate: commitsToSummarize[index]!.commitDate,
-        summary,
+        summary: ' ',
+        hasBreakingChanges: false,
+        breakingChangeSeverity: null,
+        breakingChangeDetails: null,
+        affectedComponents: null,
+        migrationRequired: false,
+        migrationSteps: null,
       };
     }),
   });
 
   return commits;
 
-  async function summariseCommit(githubUrl: string, commitHash: string) {
+  async function analyzeCommit(githubUrl: string, commitHash: string, commitMessage: string) {
     try {
       // Extract owner and repo from githubUrl
       const urlParts = githubUrl.split('/').slice(-2);
@@ -120,11 +138,29 @@ export const pollCommits = async (projectId: string) => {
         }
       }
 
-      const summary = await AisummariseCommit(diffContent);
-      return summary || ' ';
+      // Analyze both summary and breaking changes concurrently
+      const [summary, breakingChanges] = await Promise.all([
+        AisummariseCommit(diffContent),
+        detectBreakingChanges(diffContent, commitMessage)
+      ]);
+
+      return {
+        summary: summary || ' ',
+        breakingChanges
+      };
     } catch (error) { 
-      console.error(`Error summarizing commit ${commitHash}:`, error);
-      return ' ';
+      console.error(`Error analyzing commit ${commitHash}:`, error);
+      return {
+        summary: ' ',
+        breakingChanges: {
+          hasBreakingChanges: false,
+          severity: null,
+          details: null,
+          affectedComponents: null,
+          migrationRequired: false,
+          migrationSteps: null,
+        }
+      };
     }
   }
 

@@ -14,6 +14,8 @@ import ArchiveButton from './archive-button'
 const InviteButton=dynamic(()=> import('./invitebutton'),{ssr:false})
 import TeamMembers from './teammember'
 import dynamic from 'next/dynamic'
+import BreakingChangesMonitorSimple from './breaking-changes-monitor-simple'
+import BreakingChangesAlert from './breaking-changes-alert'
 
 // Loading component for better UX
 const DashboardSkeleton = () => (
@@ -102,6 +104,14 @@ const Page = () => {
           
         </div>
       </div>
+
+      {/* Breaking Changes Alerts */}
+      <div className="mt-6">
+        <Suspense fallback={<div className="h-20 bg-gray-100 rounded-md animate-pulse"></div>}>
+          <BreakingChangesAlert />
+        </Suspense>
+      </div>
+
       <div className="mt-4">
         <div className=' grid grid-cols-2 gap-4 sm:grid-cols-2'>
           <Suspense fallback={<div className="h-32 bg-gray-100 rounded-md animate-pulse"></div>}>
@@ -126,6 +136,14 @@ const Page = () => {
             )}
         </Button>
       </div>
+
+      {/* Breaking Changes Monitor */}
+      <div className="mt-8 border-t-2 border-primary pt-6 rounded-none">
+        <Suspense fallback={<div className="h-64 bg-gray-100 rounded-md animate-pulse"></div>}>
+          <BreakingChangesMonitorSimple />
+        </Suspense>
+      </div>
+
       <div className="mt-8 border-t-2 border-primary pt-6 rounded-none">
         <Suspense fallback={<div className="h-64 bg-gray-100 rounded-md animate-pulse"></div>}>
           <CommitLog/>

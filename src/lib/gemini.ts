@@ -6,6 +6,14 @@ import PQueue from 'p-queue';
 const API_KEYS = [
   process.env.GEMINI_API_KEY_1!,
   process.env.GEMINI_API_KEY_2!,
+  process.env.GEMINI_API_KEY_3!,
+  process.env.GEMINI_API_KEY_4!,
+  process.env.GEMINI_API_KEY_5!,
+  process.env.GEMINI_API_KEY_6!,
+  process.env.GEMINI_API_KEY_7!,
+  process.env.GEMINI_API_KEY_8!,
+  process.env.GEMINI_API_KEY_9!,
+  process.env.GEMINI_API_KEY_10!,
   // Add more keys as needed
   // process.env.GEMINI_API_KEY_3!,
 ].filter(key => key && key !== 'undefined');
@@ -178,6 +186,94 @@ ${truncatedDiff}
   } catch (error) {
     console.error('Failed to summarize commit:', error);
     return extractBasicDiffSummary(diff);
+  }
+};
+
+export const detectBreakingChanges = async (diff: string, commitMessage: string): Promise<{
+  hasBreakingChanges: boolean;
+  severity: string | null;
+  details: string | null;
+  affectedComponents: string[] | null;
+  migrationRequired: boolean;
+  migrationSteps: string | null;
+}> => {
+  const truncatedDiff = diff.length > 8000 ? diff.slice(0, 8000) + '\n... (truncated)' : diff;
+  
+  try {
+    return await addToLeastLoadedQueue(async () => {
+      return retryWithBackoff(async (apiKey, genAI) => {
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+        const response = await model.generateContent([
+          `You are an expert software engineer specializing in API design and breaking changes detection. Analyze this Git diff and commit message to determine if there are breaking changes.
+
+Analyze the following:
+1. API signature changes (function parameters, return types, class interfaces)
+2. Database schema changes
+3. Configuration file changes
+4. Removed functionality
+5. Changed behavior that could break existing code
+
+Respond with a JSON object in this exact format:
+{
+  "hasBreakingChanges": boolean,
+  "severity": "low" | "medium" | "high" | "critical" | null,
+  "details": "Detailed description of breaking changes or null",
+  "affectedComponents": ["component1", "component2"] or null,
+  "migrationRequired": boolean,
+  "migrationSteps": "Step-by-step migration guide or null"
+}
+
+Severity levels:
+- "low": Minor changes that might cause warnings but not failures
+- "medium": Changes that could break some integrations but are easily fixable
+- "high": Significant changes that will break most integrations
+- "critical": Major changes that require complete refactoring
+
+Commit Message: ${commitMessage}
+
+Diff:
+\`\`\`diff
+${truncatedDiff}
+\`\`\`
+`,
+        ]);
+        
+        const text = response.response.text();
+        // Extract JSON from the response
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          return {
+            hasBreakingChanges: parsed.hasBreakingChanges || false,
+            severity: parsed.severity || null,
+            details: parsed.details || null,
+            affectedComponents: parsed.affectedComponents || null,
+            migrationRequired: parsed.migrationRequired || false,
+            migrationSteps: parsed.migrationSteps || null,
+          };
+        }
+        
+        // Fallback if JSON parsing fails
+        return {
+          hasBreakingChanges: false,
+          severity: null,
+          details: null,
+          affectedComponents: null,
+          migrationRequired: false,
+          migrationSteps: null,
+        };
+      });
+    });
+  } catch (error) {
+    console.error('Failed to detect breaking changes:', error);
+    return {
+      hasBreakingChanges: false,
+      severity: null,
+      details: null,
+      affectedComponents: null,
+      migrationRequired: false,
+      migrationSteps: null,
+    };
   }
 };
 

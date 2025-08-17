@@ -98,7 +98,14 @@ model Commit{
     commitAuthorAvatar    String
     commitDate          DateTime
     summary        String
-
+    
+    // Breaking changes tracking
+    hasBreakingChanges   Boolean     @default(false)
+    breakingChangeSeverity String?   // "low", "medium", "high", "critical"
+    breakingChangeDetails String?    // Detailed description of breaking changes
+    affectedComponents   String?     // JSON array of affected components/APIs
+    migrationRequired    Boolean     @default(false)
+    migrationSteps       String?     // Steps needed to migrate
 }
 
 model SourceCodeEmbedding{

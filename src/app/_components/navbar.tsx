@@ -34,6 +34,18 @@ export function Navbar() {
               </Link>
             </li> */}
             <li>
+              <Link 
+                href="https://gitinspectdocs.web.app/docs/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Docs
+              </Link>
+            </li>
+            
+            
+            <li>
               <button 
                 onClick={() => scrollToSection('features')}
                 className="text-muted-foreground transition-colors hover:text-foreground cursor-pointer"
@@ -41,6 +53,7 @@ export function Navbar() {
                 Features
               </button>
             </li>
+            
             {/* <li>
               <Link href="#solutions" className="text-muted-foreground transition-colors hover:text-foreground">
                 Solutions
