@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { ExternalLink } from "lucide-react";
 
 export function Navbar() {
   const scrollToSection = (sectionId: string) => {
@@ -27,13 +28,13 @@ export function Navbar() {
         </div>
 
         <nav className="hidden md:block">
-          <ul className="flex items-center gap-6 text-sm font-medium">
+          <ul className="flex items-center gap-6 text-sm ">
             {/* <li>
               <Link href="#product" className="text-muted-foreground transition-colors hover:text-foreground">
                 Product
               </Link>
             </li> */}
-            <li>
+            <li className="font-semibold ">
               <Link 
                 href="https://gitinspectdocs.web.app/docs/"
                 target="_blank"
@@ -42,8 +43,17 @@ export function Navbar() {
               >
                 Docs
               </Link>
+             
             </li>
             
+            <Link 
+                href="https://gitinspectdocs.web.app/docs/"
+                // target="_blank"
+                // rel="noopener noreferrer"
+                // className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+               <ExternalLink className='ml-[-20px] size-4'/>
+              </Link>
             
             <li>
               <button 

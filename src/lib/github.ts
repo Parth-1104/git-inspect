@@ -33,7 +33,7 @@ export const getCommitHashes = async (githubUrl: string): Promise<Response[]> =>
       new Date(a.commit.author.date).getTime()
   ) as any[];
 
-  return sortedCommits.slice(0, 10).map((commit: any) => ({
+  return sortedCommits.slice(0, 20).map((commit: any) => ({
     commitHash: commit.sha as string,
     commitMessage: commit.commit?.message ?? ' ',
     commitAuthorName: commit.commit?.author?.name ?? ' ',
@@ -50,8 +50,8 @@ export const pollCommits = async (projectId: string) => {
     commitHashes
   );
 
-  // Only select the latest 10 unprocessed commits for summarization
-  const commitsToSummarize = unprocessedCommits.slice(0, 10);
+  // Select all 20 unprocessed commits for summarization
+  const commitsToSummarize = unprocessedCommits.slice(0, 20);
 
   const commitAnalyses = await Promise.allSettled(
     commitsToSummarize.map(async (commit) => {
