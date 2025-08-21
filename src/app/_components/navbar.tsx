@@ -82,9 +82,9 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <SignedOut>
-            <Button asChild variant="default" size="sm" className="px-4">
+            {/* <Button asChild variant="default" size="sm" className="px-4">
               <Link href="/sign-up">JOIN UP</Link>
-            </Button>
+            </Button> */}
             <Button asChild variant="secondary" size="sm" className="px-4">
               <Link href="/sign-in">LOGIN</Link>
             </Button>
