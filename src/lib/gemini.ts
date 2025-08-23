@@ -234,11 +234,11 @@ export const AisummariseCommit = async (diff: string): Promise<string> => {
         });
         
         const response = await model.generateContent([
-          `Analyze this Git diff and provide a concise summary:
+          `Analyze this Git diff and provide a detailed  summary of the changes and the impact of the changes on the codebase:
 
-FORMAT: [TYPE] Brief description | Key files: file1, file2 | Impact: brief impact
-
-TYPES: feat, fix, refactor, docs, style, test, chore
+FORMAT: [TYPE] description | Key files: file1, file2 | Impact: detaile 3 line  impact
+KEY Changes or Addition: describe the changes or additions in the codebase
+TYPES: feat, fix, refactor, docs, style, test, chore, perf, build, ci, revert, security, other
 
 Diff:
 \`\`\`diff
