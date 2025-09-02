@@ -47,7 +47,7 @@ const ArchiveButton = () => {
   return (
     <Button size={'sm'}
       disabled={archiveProject.isPending}
-      style={{ backgroundColor: "#a2d2ff", color: "#000" }}
+      style={{ backgroundColor: "#eae2b7", color: "#000" }}
       onClick={() => {
         const confirm = window.confirm("Are you sure you want to archive this project?")
         if (confirm) {
