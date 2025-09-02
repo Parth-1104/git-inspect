@@ -35,7 +35,7 @@ const InviteButton = () => {
 
       <Button
         size='sm'
-        style={{ backgroundColor: "#ffc8dd", color: "#000" }}
+        style={{ backgroundColor: "#eae2b7", color: "#000" }}
         onClick={() => setOpen(true)}
       >
         Invite Members
