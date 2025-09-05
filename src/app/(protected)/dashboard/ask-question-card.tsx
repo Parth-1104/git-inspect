@@ -163,6 +163,12 @@ const AskQuestionCard = () => {
                 disabled={loading}
                 className="min-h-[100px] resize-none"
                 rows={4}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault(); // stop new line
+                    onSubmit(e as any); 
+                  }
+                }}// manually trigger submit
               />
               {!question && (
                 <div className="absolute top-2 left-3 pointer-events-none text-muted-foreground/60">
