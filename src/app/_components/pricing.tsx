@@ -9,7 +9,7 @@ const plans = [
     period: "/mo",
     description: "For individuals exploring AI-driven KT.",
     features: ["1 repo", "Basic RAG Q&A", "Email support"],
-    cta: "Get Started",
+    cta: "Currently Free",
     highlighted: false,
   },
   {
@@ -18,7 +18,7 @@ const plans = [
     period: "/user/mo",
     description: "For small teams onboarding faster.",
     features: ["Unlimited repos", "Guided walkthroughs", "PR summaries"],
-    cta: "Start Team Plan",
+    cta: "Upcoming",
     highlighted: true,
   },
   {
