@@ -150,35 +150,45 @@ async function smartRetry<T>(
       
       return result;
       
-    } catch (error: any) {
-      lastError = error;
-      instance.consecutiveErrors++;
-      
-      const isRateLimit = error?.status === 429 || 
-                         error?.message?.toLowerCase().includes('quota') ||
-                         error?.message?.toLowerCase().includes('rate limit') ||
-                         error?.message?.toLowerCase().includes('too many requests');
-      
-      const isServerError = error?.status >= 500;
-      
-      if (isRateLimit) {
-        // Immediate block with exponential backoff
-        instance.isBlocked = true;
-        instance.blockUntil = new Date(Date.now() + (Math.pow(2, attempt) * 5000));
-        console.log(`⚡ Key ${index + 1} rate limited, blocked for ${Math.pow(2, attempt) * 5}s`);
-      } else if (isServerError) {
-        // Brief block for server errors
-        instance.isBlocked = true;
-        instance.blockUntil = new Date(Date.now() + 2000);
-        console.log(`🔥 Key ${index + 1} server error, brief block`);
-      }
-      
-      // Fast retry with different key
-      if (attempt < maxRetries) {
-        const delay = Math.min(baseDelay * attempt, 2000);
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
+    }  catch (error: any) {
+  lastError = error;
+  instance.consecutiveErrors++;
+  
+  // Extract deeper structure if using standard fetch response vs SDK wraps
+  const statusCode = error?.status || error?.statusLine || error?.response?.status;
+  const errorMsg = (error?.message || '').toLowerCase();
+  
+  const isRateLimit = statusCode === 429 || 
+                      errorMsg.includes('quota') ||
+                      errorMsg.includes('rate limit') ||
+                      errorMsg.includes('exhausted') ||
+                      errorMsg.includes('too many requests');
+  
+  const isServerError = statusCode >= 500;
+  
+  if (isRateLimit) {
+    instance.isBlocked = true;
+    
+    // Look for Google's specific retry delay or back off exponentially
+    let waitTimeMs = Math.pow(2, attempt) * 5000;
+    if (error?.statusText?.includes('s') || errorMsg.includes('retry in')) {
+      const match = errorMsg.match(/retry in ([\d\.]+)?s/);
+      if (match && match[1]) waitTimeMs = (parseFloat(match[1]) + 2) * 1000;
     }
+    
+    instance.blockUntil = new Date(Date.now() + waitTimeMs);
+    console.warn(`⚡ Key ${index + 1} fully exhausted. Blocked for ${waitTimeMs / 1000}s`);
+  } else if (isServerError) {
+    instance.isBlocked = true;
+    instance.blockUntil = new Date(Date.now() + 3000);
+  }
+  
+  // Instantly rotate away to a different key if one is free
+  if (attempt < maxRetries) {
+    const delay = Math.min(baseDelay * attempt, 1500);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+}
   }
   
   console.error(`💥 All retries failed after ${Date.now() - startTime}ms`);
