@@ -269,7 +269,7 @@ export const detectBreakingChanges = async (diff: string, commitMessage: string)
     return await addToOptimalQueue(async () => {
       return smartRetry(async (apiKey, genAI) => {
         const model = genAI.getGenerativeModel({ 
-          model: 'gemini-2.0-flash-lite',
+          model: 'gemini-2.5-flash-lite',
           generationConfig: {
             temperature: 0,
             maxOutputTokens: 500,
@@ -335,7 +335,7 @@ export async function summariseCode(doc: Document): Promise<string> {
     return await addToOptimalQueue(async () => {
       return smartRetry(async (apiKey, genAI) => {
         const model = genAI.getGenerativeModel({ 
-          model: 'gemini-2.0-flash-lite',
+          model: 'gemini-2.5-flash-lite',
           generationConfig: {
             temperature: 0.1,
             maxOutputTokens: 100,
@@ -452,7 +452,7 @@ export async function priorityProcess(content: string, type: 'commit' | 'code'):
   try {
     const { instance } = selected;
     const model = instance.genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash-lite',
+      model: 'gemini-2.5-flash-lite',
       generationConfig: {
         temperature: 0,
         maxOutputTokens: 50,
